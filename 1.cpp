@@ -32,5 +32,41 @@ public:
 };
 
 int main() {
+    Figure* fig = nullptr;
+    int choice;
 
+    cout << "Choose a figure:\n";
+    cout << "1. Rectangle\n";
+    cout << "2. Circle\n";
+    cout << "3. Triangle\n";
+    cout << "Your choice: ";
+    cin >> choice;
+
+    if (choice == 1) {
+        int w, h;
+        cout << "Enter width: ";
+        cin >> w;
+        cout << "Enter height: ";
+        cin >> h;
+        fig = new Rectangle(w, h);
+    } else if (choice == 2) {
+        int r;
+        cout << "Enter radius: ";
+        cin >> r;
+        fig = new Circe(r);
+    } else if (choice == 3) {
+        int b, h;
+        cout << "Enter base: ";
+        cin >> b;
+        cout << "Enter height: ";
+        cin >> h;
+        fig = new Triangle(b, h);
+    } else {
+        cout << "Invalid choice!" << endl;
+        return 1;
+    }
+
+    fig->GetArea();
+    delete fig;
+    return 0;
 }
