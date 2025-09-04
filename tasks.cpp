@@ -1,88 +1,117 @@
 #include <iostream>
+
 using namespace std;
-int toInt(double x) {
-	return static_cast<int>(x);
+
+int toInt(const char* s) {
+	if (s == 0 || s[0] == '\0') {
+		throw "not a number: empty string";
+	}
+
+	int sign = 1;
+	int i = 0;
+	if (s[0] == '+' || s[0] == '-') {
+		if (s[1] == '\0') {
+			throw "not a number: only sign";
+		}
+		sign = (s[0] == '-') ? -1 : 1;
+		i = 1;
+	}
+
+	int value = 0;
+	for (; s[i] != '\0'; ++i) {
+		char c = s[i];
+		if (c < '0' || c > '9') {
+			throw "not a number: contains non-digit";
+		}
+		value = value * 10 + (c - '0');
+	}
+	return sign * value;
 }
-struct Shape {
-	virtual ~Shape() {}
-	virtual void draw() const { cout << "Shape::draw()\n"; }
+
+class AgeException {
+public:
+	explicit AgeException(int age) : m_age(age) {}
+	int age() const { return m_age; }
+private:
+	int m_age;
 };
 
-struct Circle : public Shape {
-	void draw() const override { cout << "Circle::draw()\n"; }
-};
-char* voidToChar(void* p) {
-	return static_cast<char*>(p);
+void vote(const char* candidate, int age) {
+	if (age < 18) {
+		throw AgeException(age);
+	}
+	cout << "Voted for: " << candidate << "\n";
 }
-struct Vehicle {
-	virtual ~Vehicle() {}
-	virtual void move() const { cout << "Vehicle moving\n"; }
-};
 
-struct Car : public Vehicle {
-	void move() const override { cout << "Car driving\n"; }
-};
+void doWorkThatThrows() {
+	toInt("12x");
+}
 
-struct Bicycle : public Vehicle {
-	void move() const override { cout << "Bicycle pedaling\n"; }
-};
-void useAsCar(Vehicle& v) {
+void process() {
 	try {
-		Car& c = dynamic_cast<Car&>(v);
-		cout << "Downcast to Car& success. ";
-		c.move();
-	} catch (const bad_cast&) {
-		cout << "Downcast to Car& failed (std::bad_cast).\n";
+		doWorkThatThrows();
+	} catch (const char* msg) {
+		throw;
+	}
+}
+
+void checkPassword(const char* pass) {
+	if (pass == 0) {
+		throw "Password is null";
+	}
+	int len = 0;
+	bool hasDigit = false;
+	for (int i = 0; pass[i] != '\0'; ++i) {
+		char c = pass[i];
+		if (c >= '0' && c <= '9') hasDigit = true;
+		++len;
+	}
+	if (len < 8) {
+		throw "Password must be at least 8 characters";
+	}
+	if (!hasDigit) {
+		throw "Password must contain at least one digit";
 	}
 }
 
 int main() {
-	cout << "=== Task 1 ===\n";
-	double dx = 42.9;
-	int ix = toInt(dx);
-	cout << "double " << dx << " -> int " << ix << "\n\n";
-
-	cout << "=== Task 2 ===\n";
-	Circle c;
-	Shape* sPtr = &c;
-	sPtr->draw();
-	Circle* cBack = static_cast<Circle*>(sPtr);
-	cBack->draw();
-	cout << "\n";
-
-	cout << "=== Task 3 ===\n";
-	char buffer[] = "Hello from void* -> char*";
-	void* vp = buffer;
-	char* cp = voidToChar(vp);
-	cout << cp << "\n\n";
-
-	cout << "=== Task 4 ===\n";
-	Vehicle* garage[4];
-	garage[0] = new Car();
-	garage[1] = new Bicycle();
-	garage[2] = new Car();
-	garage[3] = new Bicycle();
-
-	for (int i = 0; i < 4; ++i) {
-		if (Car* asCar = dynamic_cast<Car*>(garage[i])) {
-			cout << "Index " << i << ": Car -> ";
-			asCar->move();
-		} else if (Bicycle* asBike = dynamic_cast<Bicycle*>(garage[i])) {
-			cout << "Index " << i << ": Bicycle -> ";
-			asBike->move();
-		} else {
-			cout << "Index " << i << ": Unknown Vehicle\n";
-		}
+	cout << "--- Task 1: toInt ---\n";
+	try {
+		cout << toInt("123") << "\n";
+		cout << toInt("-45") << "\n";
+		cout << toInt("+7") << "\n";
+		cout << toInt("1a") << "\n";
+	} catch (const char* msg) {
+		cout << "toInt error: " << msg << "\n";
 	}
-	cout << "\n";
 
-	cout << "=== Task 5 ===\n";
-	Car realCar;
-	Bicycle realBike;
-	useAsCar(realCar);
-	useAsCar(realBike);
-	for (int i = 0; i < 4; ++i) {
-		delete garage[i];
+	cout << "\n--- Task 2: process (catch + rethrow) ---\n";
+	try {
+		process();
+	} catch (const char* msg) {
+		cout << "process rethrew: " << msg << "\n";
+	}
+
+	cout << "\n--- Task 3: password check ---\n";
+	try {
+		checkPassword("qwerty12");
+		cout << "pass OK\n";
+		checkPassword("short");
+	} catch (const char* msg) {
+		cout << "password error: " << msg << "\n";
+	}
+	try {
+		checkPassword("NoDigitsHere");
+	} catch (const char* msg) {
+		cout << "password error: " << msg << "\n";
+	}
+
+	cout << "\n--- Task 4: vote ---\n";
+	try {
+		vote("Alice", 20);
+		vote("Bob", 16);
+	} catch (const AgeException& e) {
+		cout << "vote error: age is too low: " << e.age() << "\n";
 	}
 
 	return 0;
